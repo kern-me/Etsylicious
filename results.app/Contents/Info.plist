@@ -11,11 +11,11 @@
 	<key>CFBundleIconFile</key>
 	<string>applet</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.apple.ScriptEditor.id.etsylicious</string>
+	<string>com.apple.ScriptEditor.id.results</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>etsylicious</string>
+	<string>results</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -64,9 +64,9 @@
 		<key>name</key>
 		<string>ScriptWindowState</string>
 		<key>positionOfDivider</key>
-		<real>773</real>
+		<real>421</real>
 		<key>savedFrame</key>
-		<string>-1 33 960 1024 0 0 1920 1057 </string>
+		<string>76 337 700 672 0 0 1920 1057 </string>
 		<key>selectedTab</key>
 		<string>description</string>
 	</dict>
