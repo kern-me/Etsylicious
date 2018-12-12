@@ -290,7 +290,7 @@ on get_listing_url(instance)
 end get_listing_url
 
 
-# Get Total Listings of Page 1
+# Get all listing URLs from page 1
 on getURLs()
 	set theList to {}
 	set listingsTotal to get_page1_totalListings()
@@ -400,45 +400,52 @@ on makeURLArray()
 	check_page_loaded(".vesta-hero")*)
 	
 	# Make list of keywords
-	set theList to make_base_keyword_list("base-keywords.txt")
-	set initial_query to item 1 of theList
-	setQueryURL(initial_query)
+	set the_baseKeywords_List to make_base_keyword_list("base-keywords.txt")
+	set baseKeywords_count to the length of the_baseKeywords_List
 	
-	# Wait for page load
-	#check_page_loaded(".search-listings-group")
-	delay 8
-	
-	
-	set theLinkList to getURLs()
-	set theTagList to {}
-	
-	# Set number of times to repeat
-	set listCount to length of theLinkList
-	
-	# Progress Indicators
-	set progress total steps to listCount
-	set progress completed steps to 0
-	set progress description to "Processing Base Keywords..."
-	set progress additional description to ""
-	
-	write_tagList_headers(initial_query)
-	write_listing_data_headers(initial_query)
-	
-	repeat with a from 1 to length of theLinkList
-		# Process each line of the base file
-		set progress additional description to "Processing Listing " & a & " of " & listCount & ""
-		set queuedURL to item a of theLinkList
-		
-		# Initiate the queued URL
-		setFullURL(queuedURL)
+	repeat with a from 1 to baseKeywords_count
+		set progress additional description to "Processing Keyword " & a & " of " & listCount & ""
+		set initial_query to item a of the_baseKeywords_List
+		setQueryURL(initial_query)
 		
 		# Wait for page load
 		#check_page_loaded(".search-listings-group")
 		delay 8
-		save_tags(initial_query)
-		save_listing_data(initial_query)
 		
-		delay 2
+		
+		set theLinkList to getURLs()
+		set theTagList to {}
+		
+		# Set number of times to repeat
+		set listCount to length of theLinkList
+		
+		# Progress Indicators
+		set progress total steps to listCount
+		set progress completed steps to 0
+		set progress description to "Processing Base Keywords..."
+		set progress additional description to ""
+		
+		write_tagList_headers(initial_query)
+		write_listing_data_headers(initial_query)
+		
+		
+		repeat with a from 1 to length of theLinkList
+			# Process each line of the base file
+			set progress additional description to "Processing Listing " & a & " of " & listCount & ""
+			set queuedURL to item a of theLinkList
+			
+			# Initiate the queued URL
+			setFullURL(queuedURL)
+			
+			# Wait for page load
+			#check_page_loaded(".search-listings-group")
+			delay 8
+			
+			save_tags(initial_query)
+			save_listing_data(initial_query)
+			
+			delay 2
+		end repeat
 	end repeat
 end makeURLArray
 

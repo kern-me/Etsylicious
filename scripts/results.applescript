@@ -386,11 +386,77 @@ on makeList()
 	return a
 end makeList
 
+###############################################
+# URLS
+###############################################
+
+# Get Shop Link
+on get_shop_link()
+	set a to getFromDom(".flag-body > div > a", 0, "href")
+	return a
+end get_shop_link
+
+
+# Handler for processing Query URLs
+on make_url_list(theList, listCount)
+	set queryURLs to {}
+	repeat with a from 1 to listCount
+		set keyword to item a of theList
+		set queuedURL to "https://www.etsy.com/search/?q=" & keyword & ""
+		insertItemInList(queuedURL, queryURLs, 1)
+	end repeat
+	return queryURLs
+end make_url_list
+
+# Get total listings
+on get_page1_totalListings()
+	set a to getFromDom("#reorderable-listing-results", 0, "childElementCount")
+	return a
+end get_page1_totalListings
+
+
+# Get listing url
+on get_listing_url(instance)
+	set a to getFromDom("#reorderable-listing-results .listing-link", instance, "href")
+	return a
+end get_listing_url
+
+# Get the shop name on the search listings page
+on get_search_results_shopName(instance)
+	set a to getFromDom(".v2-listing-card__info > div > div > p", instance, "innerText")
+	return a
+end get_search_results_shopName
+
+# Get all listing urls from page1 of search
+on get_shop_URLs()
+	set theList to {}
+	set listingsTotal to get_page1_totalListings()
+	
+	repeat with x from 1 to (listingsTotal - 1)
+		set queuedShopName to get_search_results_shopName(x)
+		delay default_delay
+		set queuedURL to "https://www.etsy.com/shop/?q=" & queuedShopName & ""
+		insertItemInList(queuedShopName, theList, x)
+	end repeat
+	
+	return theList
+end get_shop_URLs
+
+# Makes the list of query URLs from the base-keywords file
+on make_baseList()
+	set theList to makeListFromFile("base-keywords.txt")
+	set listCount to length of theList
+	set url_list to make_url_list(theList, listCount)
+	
+	return url_list as list
+end make_baseList
+
+
 
 ###############################################
 # LOOPS
 ###############################################
-on getAllData(a, b, c, d, n)
+on get_listing_data(a, b, c, d, n)
 	# Get all the data from the dom
 	repeat with i from 0 to n
 		delay default_delay
@@ -426,16 +492,49 @@ on getAllData(a, b, c, d, n)
 		delay default_delay
 		insertItemInList(bestSeller, d, 1)
 	end repeat
-end getAllData
+end get_listing_data
 
+###############################################
+# GET SHOP DATA
+###############################################
+
+on get_shop_data(a,b,c,d)
+	set theList to {}
+	
+	set sales to getFromDom(".shop-info > p > span:nth-child(3)", 0, "innerText.replace(/[ Sales]/g,'')")
+	set shop_favorites to getFromDom(".favorite-shop-action-text + span span", 0, "innerText")
+	set shop_num_items to getFromDom("#items-label span", 0, "innerText." & stripParens & "")
+	set shop_date to getFromDom(".etsy-since", 0, "innerText.replace(/On Etsy since /g,'')")
+	
+	insertItemInList(sales, a, 1)
+	insertItemInList(shop_favorites, b, 1)
+	insertItemInList(shop_num_items, c, 1)
+	insertItemInList(shop_date, d, 1)
+	
+	return theList
+end get_shop_data
+
+	insertItemInList(sales, theList, 1)
+	insertItemInList(shop_favorites, theList, 1)
+	insertItemInList(shop_num_items, theList, 1)
+	insertItemInList(shop_date, theList, 1)
+
+
+###############################################
+# GET LISTING DATA
+###############################################
 
 # Get Data Loop
-on getDataLoop()
+on getDataLoop(queuedShopURL)
 	set theCount to -1
 	set theReviewsList to {}
 	set thePricingList to {}
 	set theFreeShippingList to {}
 	set theBestSellerList to {}
+	set theSalesList to {}
+	set theShopFavoritesList to {}
+	set theShopNumItems to {}
+	set theShopDate to {}
 	
 	set text item delimiters to ","
 	
@@ -449,7 +548,7 @@ on getDataLoop()
 	set n to get_totalListingsCount()
 	
 	# Get all the data from the dom
-	getAllData(theReviewsList, thePricingList, theFreeShippingList, theBestSellerList, n)
+	get_listing_data(theReviewsList, thePricingList, theFreeShippingList, theBestSellerList, n)
 	
 	delay default_delay
 	
@@ -458,32 +557,28 @@ on getDataLoop()
 	set freeShippingPercentage to (listSum(theFreeShippingList) / n)
 	set bestSellerPercentage to (listSum(theBestSellerList) / n)
 	
+	setFullURL(queuedShopURL)
+	
+	delay 8
+		
+		# Get shop page data
+		set sales to getFromDom(".shop-info > p > span:nth-child(3)", 0, "innerText.replace(/[ Sales]/g,'')")
+		set shop_favorites to getFromDom(".favorite-shop-action-text + span span", 0, "innerText")
+		set shop_num_items to getFromDom("#items-label span", 0, "innerText." & stripParens & "")
+		set shop_date to getFromDom(".etsy-since", 0, "innerText.replace(/On Etsy since /g,'')")
+		
+		delay 1
+	
+	# Write all the collected data to disk
 	writeFile(tagSearchQuery & "," & totalListingResults & "," & avgReviews & "," & avgPrice & "," & freeShippingPercentage & "," & bestSellerPercentage & newLine, false, "tag-research-results", "csv")
+	
 end getDataLoop
 
 
-###############################################
-
-on make_url_list(theList, listCount)
-	set queryURLs to {}
-	repeat with a from 1 to listCount
-		set keyword to item a of theList
-		set queuedURL to "https://www.etsy.com/search/?q=" & keyword & ""
-		insertItemInList(queuedURL, queryURLs, 1)
-	end repeat
-	return queryURLs
-end make_url_list
 
 
 
-# Make the list of query URLs from the base-keywords file
-on make_baseList()
-	set theList to makeListFromFile("base-keywords.txt")
-	set listCount to length of theList
-	set url_list to make_url_list(theList, listCount)
-	
-	return url_list as list
-end make_baseList
+
 
 ###############################################
 
@@ -504,10 +599,13 @@ on process_urlQueryList()
 		#wait for page to load
 		delay 8
 		
+		# Write all the data
 		getDataLoop()
 	end repeat
 	progress_indicator_reset()
 	log "Finished"
 end process_urlQueryList
 
-process_urlQueryList()
+#process_urlQueryList()
+#get_shop_data()
+
