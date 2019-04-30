@@ -404,7 +404,7 @@ on makeURLArray()
 	set baseKeywords_count to the length of the_baseKeywords_List
 	
 	repeat with a from 1 to baseKeywords_count
-		set progress additional description to "Processing Keyword " & a & " of " & listCount & ""
+		set progress additional description to "Processing Keyword " & a & " of " & baseKeywords_count & ""
 		set initial_query to item a of the_baseKeywords_List
 		setQueryURL(initial_query)
 		

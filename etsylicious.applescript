@@ -224,9 +224,9 @@ end setVarURL
 ---------------------------------
 on setFullURL(a)
 	tell application "Safari"
-		delay 0.01
+		delay 0.5
 		set URL of document 1 to a
-		delay 0.01
+		delay 0.5
 	end tell
 end setFullURL
 
@@ -368,18 +368,7 @@ on get_results()
 	return a
 end get_results
 
----------------------------------
-# GET REVIEWS
----------------------------------
-on get_reviews(instance)
-	set a to getFromDom(selector_reviews, "", instance, "innerText." & stripNonDigits & "", 1)
-	
-	if a is false then
-		return "0"
-	else if a is not false then
-		return a
-	end if
-end get_reviews
+
 
 ---------------------------------
 # GET PRICE
@@ -455,19 +444,6 @@ end get_results_shop_name
 # SEARCH RESULTS PAGE DATA LOOPS
 ##############################################
 
----------------------------------
-# LOOP REVIEWS
----------------------------------
-on loop_reviews(theCount)
-	set theList to {}
-	
-	repeat with a from 0 to theCount
-		set b to get_reviews(a)
-		insertItemInList(b, theList, 1)
-	end repeat
-	
-	return theList
-end loop_reviews
 
 ---------------------------------
 # LOOP PRICE
@@ -649,21 +625,73 @@ end make_full_urls
 ###############################################
 # SEARCH RESULTS LOOPS
 ###############################################
+---------------------------------
+# GET REVIEWS
+---------------------------------
+on get_reviews(instance)
+	set a to getFromDom(".responsive-listing-grid", "", instance, "innerText." & stripNonDigits & "", 1)
+	
+	if a is false then
+		return "0"
+	else if a is not false then
+		return a
+	end if
+end get_reviews
+
+---------------------------------
+# LOOP REVIEWS
+---------------------------------
+on loop_reviews(theCount)
+	set theList to {}
+	
+	repeat with a from 0 to theCount
+		log "loop_reviews > get_reviews(a)"
+		set b to get_reviews(a)
+		insertItemInList(b, theList, 1)
+	end repeat
+	
+	return theList
+end loop_reviews
+
 
 on get_search_results_loops()
+	log "START get_search_results_loops()"
+	
+	log "get_search_results_loops() > 1. count_listings()"
 	set theCount to count_listings()
+	
 	set theList to {}
+	
+	log "get_search_results_loops() > 2. get_tag_name()"
 	set tagName to get_tag_name()
+	
+	log tagName
 	set results to get_results()
 	
+	log "get_search_results_loops() > 3. loop_reviews(theCount)"
 	set reviewsTotal to loop_reviews(theCount)
+	log reviewsTotal
+	
+	log "loop_price(theCount)"
 	set priceTotal to loop_price(theCount)
+	
+	log "loop_best_seller(theCount)"
 	set bestSellerTotal to loop_best_seller(theCount)
+	log bestSellerTotal
+	
+	log "loop_free_shipping(theCount)"
 	set freeShippingTotal to loop_free_shipping(theCount)
+	log freeShippingTotal
 	
 	# Calculate averages and percentages
+	log "listAvg(reviewsTotal)"
 	set avgReviews to listAvg(reviewsTotal)
+	log avgReviews
+	
+	log "listAvg(priceTotal)"
 	set avgPrice to listAvg(priceTotal)
+	log avgPrice
+	
 	set bestSellerPercentage to listSum(bestSellerTotal) / theCount
 	set freeShippingPercentage to listSum(freeShippingTotal) / theCount
 	
@@ -732,7 +760,7 @@ on get_shop_data()
 		setFullURL(queuedURL)
 		
 		# Page Load
-		delay 6	
+		delay 6
 		
 		set shop_page_content to get_shop_page_content()
 		
@@ -778,33 +806,46 @@ end get_shop_data
 ###############################################
 
 #writeHeaders()
+log "main()"
 on main()
+	
+	log "1. main > writeHeaders()"
 	writeHeaders()
 	
+	log "2. main > make_full_urls()"
+	# Creates a list of urls from the existing base keywords file on the desktop
 	set urlList to make_full_urls()
 	
+	log urlList
+	
+	
+	log "3. Start loop"
 	repeat with a from 1 to length of urlList
 		set queuedURL to item a of urlList
-				
+		
+		log "4. main > setFullURL(queuedURL)"
 		setFullURL(queuedURL)
 		
 		delay 6
 		
+		log "5. main > get_search_results_loops()"
 		set searchResults to get_search_results_loops()
+		
+		log "6. main > get_shop_data()"
 		set shopData to get_shop_data()
 		
+		log "7. main > set searchResults to searchResults as string"
 		set searchResults to searchResults as string
+		
+		log "8. main > shopData to shopData as string"
 		set shopData to shopData as string
 		
-		
+		log "9. main > writeFile"
 		writeFile(searchResults & "," & shopData & newLine, false, "results", "csv")
 	end repeat
 end main
 
 main()
-
-#get_unique_node()
-
 
 
 
